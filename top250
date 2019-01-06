@@ -1,0 +1,67 @@
+# -*- coding: utf-8 -*-
+import requests
+from lxml import etree
+from selenium import webdriver
+import xlsxwriter
+
+def generate_excel(dict_data, filename):
+    workbook = xlsxwriter.Workbook(filename)
+    bold_format = workbook.add_format({'bold': True})
+    worksheet = workbook.add_worksheet('movie')
+
+    worksheet.write('A1', 'number', bold_format)
+    worksheet.write('B1', 'name', bold_format)
+    worksheet.write('C1', 'score', bold_format)
+
+    ss = []
+    for key in dict_data:
+        content = dict_data[key]['name'] + "(" + dict_data[key]['score'] + ")"
+        ss.append(content)
+
+    row = 1
+    col = 0
+    for s in ss:
+        worksheet.write(row, col, str(key))
+        worksheet.write(row, col + 1, dict_data[key]['name'])
+        worksheet.write(row, col + 2, dict_data[key]['score'])
+        row = row + 1
+        col = 0
+    workbook.close()
+
+
+result = {}
+driver = webdriver.Chrome()
+mindex = 1
+for index in range(0, 251, 25):
+    url = "https://movie.douban.com/top250?start=" + str(index)
+    print(url)
+    driver.get(url)
+    html = etree.HTML(driver.page_source)
+    for cindex in range(1,26):
+        first_xpath = "/html[@class='ua-mac ua-webkit']/body/div[@id='wrapper']/div[@id='content']/div[@class='grid-16-8 clearfix']/div[@class='article']/ol[@class='grid_view']/li[" + str(cindex) + "]/div[@class='item']/div[@class='info']/div[@class='hd']/a/span[@class='title']/text()"
+        first_name = html.xpath(first_xpath)
+        print(first_name)
+        moviename = ""
+
+        #for fn in first_name:
+        #    moviename = moviename + "".join(str(fn).split())
+        #moviename = moviename + str(first_name)
+        #moviename = "".join(str(first_name).split())
+        #secon_xpath = ""
+        other_xpath = "/html[@class='ua-mac ua-webkit']/body/div[@id='wrapper']/div[@id='content']/div[@class='grid-16-8 clearfix']/div[@class='article']/ol[@class='grid_view']/li[" + str(cindex) + "]/div[@class='item']/div[@class='info']/div[@class='hd']/a/span[@class='other']/text()"
+        other_name = html.xpath(other_xpath)
+        print(other_name)
+        #moviename = moviename + str(other_name)
+        #for on in other_name:
+        #    moviename = moviename + "".join(str(on).split())
+        score_xpath = "/html[@class='ua-mac ua-webkit']/body/div[@id='wrapper']/div[@id='content']/div[@class='grid-16-8 clearfix']/div[@class='article']/ol[@class='grid_view']/li[1]/div[@class='item']/div[@class='info']/div[@class='bd']/div[@class='star']/span[@class='rating_num']/text()"
+        score = html.xpath(score_xpath)
+        if mindex < 251:
+            moviename = moviename + "".join(str(first_name[0]).split())
+            result[mindex] = {}
+            result[mindex]['name'] = moviename
+            result[mindex]['score'] = str(score[0])
+        #print(score)
+            mindex = mindex + 1
+driver.close()
+generate_excel(result, "top250_movie.xlsx")
