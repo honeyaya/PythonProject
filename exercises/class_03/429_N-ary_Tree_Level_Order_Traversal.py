@@ -40,4 +40,3 @@ class Solution(object):
             queue = queue[onewidth:]
 
         return res
-    
